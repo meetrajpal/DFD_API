@@ -1,6 +1,7 @@
 from operator import and_
-
+from sqlalchemy import update
 from sqlalchemy.orm import Session
+from sqlalchemy.sql.functions import user
 from models.User import User
 
 
@@ -28,3 +29,20 @@ class UserDAO:
         self.db.commit()
         self.db.refresh(user)
         return user
+
+    def verify_user_email(self, user_id: int):
+        stmt = update(User).where(User.user_id == user_id).values({"verified_email": True})
+        result = self.db.execute(stmt)
+        self.db.commit()
+        return int(result.rowcount) > 0
+
+    def update_user_email(self, user_id: int, email: str):
+        stmt = update(User).where(User.user_id == user_id).values({"email": email, "verified_email": False})
+        result = self.db.execute(stmt)
+        self.db.commit()
+        return result.rowcount > 0
+
+    def delete_user(self, user: User):
+        # self.db.query(User).filter(User.user_id == user_id).delete()
+        self.db.delete(user)
+        self.db.commit()

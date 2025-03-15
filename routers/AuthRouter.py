@@ -1,4 +1,5 @@
 import os
+import re
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from dto.req.AuthReqDto import AuthReqDto
@@ -16,7 +17,7 @@ from fastapi import HTTPException
 from pydantic import BaseModel
 
 
-class MessageResponse(BaseModel):
+class LogoutResponse(BaseModel):
     details: str
 
 
@@ -158,6 +159,18 @@ async def create_user(
             message="Request could not be completed due to an error.",
         )
         return JSONResponse(content=error_res.dict(), status_code=400)
+    elif not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', user.email):
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter a valid email address",
+                details=f"Invalid email address: {user.email}",
+            ),
+            message="Request could not be completed due to an error.",
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
     elif not user.cnf_password:
         error_res = GeneralMsgResDto(
             isSuccess=False,
@@ -190,9 +203,9 @@ async def create_user(
 @router.post("/logout",
              response_model=GeneralMsgResDto,
              responses={
-                 400: {"model": MessageResponse, "description": "Bad Request"},
-                 401: {"model": MessageResponse, "description": "Unauthorized"},
-                 500: {"model": MessageResponse, "description": "Internal Server Error"}
+                 400: {"model": LogoutResponse, "description": "Bad Request"},
+                 401: {"model": LogoutResponse, "description": "Unauthorized"},
+                 500: {"model": LogoutResponse, "description": "Internal Server Error"}
              }
              )
 async def logout(

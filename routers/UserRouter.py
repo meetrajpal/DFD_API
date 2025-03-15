@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Query
 from typing import Optional, List
+
+from starlette.responses import JSONResponse
+
+from dto.res.ErrorResDto import ErrorResDto
 from models.User import User
 from config.database import db_dependency
 from services.impl.UserServiceImpl import UserServiceImpl
@@ -47,3 +51,31 @@ async def get_users(
 
     return user_service.get_users()
 
+
+@router.delete("",
+               response_model=GeneralMsgResDto,
+               responses={
+                   404: {"model": GeneralMsgResDto, "description": "User not found"},
+                   400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                   500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+               }
+               )
+async def delete_users(
+        db: db_dependency,
+        user_id: int = Query(description="Enter the user id to delete user")
+):
+    if not user_id:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter user id",
+                details=f"Please enter user id to delete a user.",
+            ),
+            message="Request could not be completed due to an error.",
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
+
+    user_service = UserServiceImpl(db)
+    return user_service.delete_user(user_id)

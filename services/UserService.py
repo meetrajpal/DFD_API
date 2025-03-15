@@ -27,3 +27,11 @@ class UserService(ABC):
     @abstractmethod
     def add_user(self, user: UserReqDto):
         pass
+
+    @abstractmethod
+    def verify_email(self, user_id: int):
+        pass
+
+    @abstractmethod
+    def delete_user(self, user_id: int):
+        pass
