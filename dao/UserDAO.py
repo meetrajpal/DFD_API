@@ -36,6 +36,12 @@ class UserDAO:
         self.db.commit()
         return int(result.rowcount) > 0
 
+    def update_user_password(self, user_id: int, password: str):
+        stmt = update(User).where(User.user_id == user_id).values({"password": password})
+        result = self.db.execute(stmt)
+        self.db.commit()
+        return int(result.rowcount) > 0
+
     def update_user_email(self, user_id: int, email: str):
         stmt = update(User).where(User.user_id == user_id).values({"email": email, "verified_email": False})
         result = self.db.execute(stmt)

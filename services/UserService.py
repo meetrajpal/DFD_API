@@ -33,5 +33,13 @@ class UserService(ABC):
         pass
 
     @abstractmethod
+    def reset_password(self, token: str, password: str):
+        pass
+
+    @abstractmethod
+    def update_email(self, token: str, email: str):
+        pass
+
+    @abstractmethod
     def delete_user(self, user_id: int):
         pass

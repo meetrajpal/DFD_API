@@ -11,3 +11,11 @@ class AuthService(ABC):
     @abstractmethod
     def logout(self, token: str, user_id: int):
         pass
+
+    @abstractmethod
+    def forgot_password(self, email: str):
+        pass
+
+    @abstractmethod
+    def update_email(self, email: str):
+        pass

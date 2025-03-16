@@ -3,10 +3,13 @@ import re
 from typing import Annotated
 from fastapi import APIRouter, Depends, Request
 from dto.req.AuthReqDto import AuthReqDto
+from dto.req.UpdateEmailReqDto import UpdateEmailReqDto
 from dto.req.UserReqDto import UserReqDto
 from config.database import db_dependency
 from dto.res.AuthResDto import AuthResDto
+from services.InvalidTokenService import InvalidTokenService
 from services.impl.AuthServiceImpl import AuthServiceImpl
+from services.impl.InvalidTokenServiceImpl import InvalidTokenServiceImpl
 from services.impl.UserServiceImpl import UserServiceImpl
 from dto.res.GeneralMsgResDto import GeneralMsgResDto
 from dto.res.ErrorResDto import ErrorResDto
@@ -14,24 +17,25 @@ from fastapi.responses import JSONResponse
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from fastapi import HTTPException
-from pydantic import BaseModel
-
-
-class LogoutResponse(BaseModel):
-    details: str
+from dto.req.ForgotPasswordReqDto import ForgotPasswordReqDto
+from dto.res.LogoutResDto import LogoutResDto
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
 
-async def get_current_user(request: Request, token: Annotated[str, Depends(oauth2_bearer)] = None):
+async def get_current_user(db: db_dependency, request: Request, token: Annotated[str, Depends(oauth2_bearer)] = None):
     if token is None:
         raise HTTPException(
-            status_code=401,
+            status_code=400,
             detail="Authentication token is missing. Please log in to get a valid token."
         )
     try:
+        invalid_token_service = InvalidTokenServiceImpl(db)
+        if invalid_token_service.get_by_token(token) is not None:
+            raise HTTPException(status_code=401, detail="Invalid or expired JWT token. Please log in.")
+
         payload = jwt.decode(token, os.getenv("JWT_SECRET"), algorithms=[os.getenv("ALGO")])
         username: str = payload.get("sub")
         user_id: int = payload.get("id")
@@ -203,9 +207,9 @@ async def create_user(
 @router.post("/logout",
              response_model=GeneralMsgResDto,
              responses={
-                 400: {"model": LogoutResponse, "description": "Bad Request"},
-                 401: {"model": LogoutResponse, "description": "Unauthorized"},
-                 500: {"model": LogoutResponse, "description": "Internal Server Error"}
+                 400: {"model": LogoutResDto, "description": "Bad Request"},
+                 401: {"model": LogoutResDto, "description": "Unauthorized"},
+                 500: {"model": LogoutResDto, "description": "Internal Server Error"}
              }
              )
 async def logout(
@@ -227,4 +231,72 @@ async def logout(
         return JSONResponse(content=error_res.dict(), status_code=401)
 
     auth_service = AuthServiceImpl(db)
-    return auth_service.logout(token, user["user_id"])
+    return auth_service.logout(token)
+
+
+@router.post("/forgot-password",
+             response_model=GeneralMsgResDto,
+             responses={
+                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                 404: {"model": GeneralMsgResDto, "description": "Not Found"},
+                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+             })
+async def forgot_password(
+        db: db_dependency,
+        user: ForgotPasswordReqDto
+):
+    if user.email is None:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please fill email",
+                details=f"Email address is empty",
+            ),
+            message="Request could not be completed due to an error."
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
+
+    auth_service = AuthServiceImpl(db)
+    return auth_service.forgot_password(user.email)
+
+
+@router.post("/update-email",
+             response_model=GeneralMsgResDto,
+             responses={
+                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                 404: {"model": GeneralMsgResDto, "description": "Not Found"},
+                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+             })
+async def update_email(
+        db: db_dependency,
+        user: UpdateEmailReqDto
+):
+    if not user or user.email is None:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please fill email",
+                details=f"Email address is empty",
+            ),
+            message="Request could not be completed due to an error."
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
+    elif not re.match(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$', user.email):
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter a valid email address",
+                details=f"Invalid email address: {user.email}",
+            ),
+            message="Request could not be completed due to an error.",
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
+
+    auth_service = AuthServiceImpl(db)
+    return auth_service.update_email(user.email)

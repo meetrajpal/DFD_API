@@ -13,7 +13,7 @@ class InvalidTokenDAO:
         return self.db.query(InvalidToken).filter(InvalidToken.token == token).first()
 
     def expire_token(self, token: InvalidToken):
-        self.db.add(InvalidToken)
+        self.db.add(token)
         self.db.commit()
         self.db.refresh(token)
         return token

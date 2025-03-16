@@ -60,7 +60,7 @@ async def get_users(
                    500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
                }
                )
-async def delete_users(
+async def delete_user(
         db: db_dependency,
         user_id: int = Query(description="Enter the user id to delete user")
 ):
