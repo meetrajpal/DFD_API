@@ -14,12 +14,13 @@ from sib_api_v3_sdk.rest import ApiException
 from services.UserService import UserService
 from config.MailTemplate import generate_verify_email_template
 from jose import jwt, JWTError
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from services.impl.InvalidTokenServiceImpl import InvalidTokenServiceImpl
 
 configuration = sib_api_v3_sdk.Configuration()
 configuration.api_key['api-key'] = os.getenv('BREVO')
 api_instance = sib_api_v3_sdk.TransactionalEmailsApi(sib_api_v3_sdk.ApiClient(configuration))
+
 bycrpt = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 

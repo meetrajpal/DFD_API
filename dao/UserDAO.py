@@ -1,7 +1,6 @@
 from operator import and_
 from sqlalchemy import update
 from sqlalchemy.orm import Session
-from sqlalchemy.sql.functions import user
 from models.User import User
 
 
@@ -49,6 +48,5 @@ class UserDAO:
         return result.rowcount > 0
 
     def delete_user(self, user: User):
-        # self.db.query(User).filter(User.user_id == user_id).delete()
         self.db.delete(user)
         self.db.commit()

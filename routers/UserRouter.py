@@ -1,14 +1,16 @@
-from fastapi import APIRouter, Query
 from typing import Optional, List
 
+from fastapi import APIRouter, Query
 from starlette.responses import JSONResponse
 
-from dto.res.ErrorResDto import ErrorResDto
-from models.User import User
 from config.database import db_dependency
-from services.impl.UserServiceImpl import UserServiceImpl
+from dto.res.ErrorResDto import ErrorResDto
 from dto.res.GeneralMsgResDto import GeneralMsgResDto
+from dto.res.UnauthenticatedResDto import UnauthenticatedResDto
 from dto.res.UserResDto import UserResDto
+from models.User import User
+from services.impl.UserServiceImpl import UserServiceImpl
+from routers.AuthRouter import user_dependency
 
 router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 
@@ -16,6 +18,7 @@ router = APIRouter(prefix="/api/v1/users", tags=["Users"])
 @router.get("",
             response_model=List[UserResDto] | UserResDto,
             responses={
+                401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
                 404: {"model": GeneralMsgResDto, "description": "User not found"},
                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
@@ -23,10 +26,24 @@ router = APIRouter(prefix="/api/v1/users", tags=["Users"])
             )
 async def get_users(
         db: db_dependency,
+        user: user_dependency,
         username: Optional[str] = Query(None, description="Enter the username to find user with username"),
         email: Optional[str] = Query(None, description="Enter the email to find user with email"),
         user_id: Optional[int] = Query(None, description="Enter the user ID to find user with user_id")
 ):
+    if user is None:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="unauthorized",
+                message="Authentication failed, please log in to access this resource.",
+                details=f"Full authentication is required to access this resource.",
+            ),
+            message="Request could not be completed due to an error.",
+        )
+        return JSONResponse(content=error_res.dict(), status_code=401)
+
     user_service = UserServiceImpl(db)
 
     if username and not email and not user_id:
@@ -55,15 +72,30 @@ async def get_users(
 @router.delete("",
                response_model=GeneralMsgResDto,
                responses={
+                   401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
                    404: {"model": GeneralMsgResDto, "description": "User not found"},
                    400: {"model": GeneralMsgResDto, "description": "Bad Request"},
                    500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
                }
                )
 async def delete_user(
+        user: user_dependency,
         db: db_dependency,
         user_id: int = Query(description="Enter the user id to delete user")
 ):
+    if user is None:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="unauthorized",
+                message="Authentication failed, please log in to access this resource.",
+                details=f"Full authentication is required to access this resource.",
+            ),
+            message="Request could not be completed due to an error.",
+        )
+        return JSONResponse(content=error_res.dict(), status_code=401)
+
     if not user_id:
         error_res = GeneralMsgResDto(
             isSuccess=False,

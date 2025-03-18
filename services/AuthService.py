@@ -9,7 +9,7 @@ class AuthService(ABC):
         pass
 
     @abstractmethod
-    def logout(self, token: str, user_id: int):
+    def logout(self, token: str):
         pass
 
     @abstractmethod

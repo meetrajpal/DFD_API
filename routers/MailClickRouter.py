@@ -9,7 +9,7 @@ from dto.res.GeneralMsgResDto import GeneralMsgResDto
 from services.impl.InvalidTokenServiceImpl import InvalidTokenServiceImpl
 from services.impl.UserServiceImpl import UserServiceImpl
 
-router = APIRouter(prefix="/api/v1/mail", tags=["Mail Link Click API"])
+router = APIRouter(prefix="/api/v1/mail", tags=["Mail Link Click"])
 
 
 @router.get("/verify-email/{token}",

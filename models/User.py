@@ -1,5 +1,6 @@
 from typing import Any
 from sqlalchemy import Column, Integer, Boolean, String
+from sqlalchemy.orm import relationship
 from config.database import Base
 
 
@@ -11,6 +12,7 @@ class User(Base):
     email = Column(String, unique=True, nullable=False)
     password = Column(String, nullable=False)
     verified_email = Column(Boolean, default=False, nullable=False)
+    videos = relationship("Video", back_populates="user")
 
     def __init__(self, username, name, email, password, **kw: Any):
         super().__init__(**kw)

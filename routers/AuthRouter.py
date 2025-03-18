@@ -7,7 +7,6 @@ from dto.req.UpdateEmailReqDto import UpdateEmailReqDto
 from dto.req.UserReqDto import UserReqDto
 from config.database import db_dependency
 from dto.res.AuthResDto import AuthResDto
-from services.InvalidTokenService import InvalidTokenService
 from services.impl.AuthServiceImpl import AuthServiceImpl
 from services.impl.InvalidTokenServiceImpl import InvalidTokenServiceImpl
 from services.impl.UserServiceImpl import UserServiceImpl
@@ -18,7 +17,7 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from fastapi import HTTPException
 from dto.req.ForgotPasswordReqDto import ForgotPasswordReqDto
-from dto.res.LogoutResDto import LogoutResDto
+from dto.res.UnauthenticatedResDto import UnauthenticatedResDto
 
 
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
@@ -207,9 +206,9 @@ async def create_user(
 @router.post("/logout",
              response_model=GeneralMsgResDto,
              responses={
-                 400: {"model": LogoutResDto, "description": "Bad Request"},
-                 401: {"model": LogoutResDto, "description": "Unauthorized"},
-                 500: {"model": LogoutResDto, "description": "Internal Server Error"}
+                 400: {"model": UnauthenticatedResDto, "description": "Bad Request"},
+                 401: {"model": UnauthenticatedResDto, "description": "Unauthorized"},
+                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
              }
              )
 async def logout(
