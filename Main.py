@@ -2,7 +2,8 @@ import os
 
 from fastapi import FastAPI
 from dotenv import load_dotenv
-from routers import UserRouter, AuthRouter, MailClickRouter, VideoRouter, FrameRouter
+from routers import UserRouter, AuthRouter, MailClickRouter, VideoRouter, FrameRouter, DetectRouter
+
 load_dotenv(".env")
 
 
@@ -10,6 +11,7 @@ app = FastAPI(title="Deepfake Detection API", description="Meet Rajpal", docs_ur
 
 app.include_router(AuthRouter.router)
 app.include_router(MailClickRouter.router)
+app.include_router(DetectRouter.router)
 app.include_router(UserRouter.router)
 app.include_router(VideoRouter.router)
 app.include_router(FrameRouter.router)

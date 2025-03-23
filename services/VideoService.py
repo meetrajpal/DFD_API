@@ -22,7 +22,7 @@ class VideoService(ABC):
         pass
 
     @abstractmethod
-    def add_video(self, video: VideoReqDto, user_id: int):
+    def add_video(self, filename: str, file_path: str, user_id: int):
         pass
 
     @abstractmethod

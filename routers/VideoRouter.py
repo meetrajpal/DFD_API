@@ -116,7 +116,7 @@ async def post_video(
         return JSONResponse(content=error_res.dict(), status_code=400)
 
     video_service = VideoServiceImpl(db)
-    return video_service.add_video(video, user["user_id"])
+    return video_service.add_video(video.filename, video.filepath, user["user_id"])
 
 
 @router.delete("",

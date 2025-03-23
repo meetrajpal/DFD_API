@@ -27,8 +27,8 @@ oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=F
 async def get_current_user(db: db_dependency, request: Request, token: Annotated[str, Depends(oauth2_bearer)] = None):
     if token is None:
         raise HTTPException(
-            status_code=400,
-            detail="Authentication token is missing. Please log in to get a valid token."
+            status_code=401,
+            detail="Authentication failed, please log in to access this resource. Authentication token is missing."
         )
     try:
         invalid_token_service = InvalidTokenServiceImpl(db)

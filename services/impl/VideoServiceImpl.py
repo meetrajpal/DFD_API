@@ -1,5 +1,4 @@
 import traceback
-from typing import List
 
 from dao.VideoDAO import VideoDAO
 from sqlalchemy.orm import Session
@@ -73,9 +72,9 @@ class VideoServiceImpl(VideoService):
             return JSONResponse(content=error_res.dict(), status_code=404)
         return videos
 
-    def add_video(self, video: VideoReqDto, user_id: int):
-        data: Video = self.dao.get_videos_by_userid_filename(user_id, video.filename)
-        if data is not None and data.filename == video.filename:
+    def add_video(self, filename: str, file_path: str, user_id: int):
+        data: Video = self.dao.get_videos_by_userid_filename(user_id, filename)
+        if data and data.filename == filename:
             error_res = GeneralMsgResDto(
                 isSuccess=False,
                 hasException=True,
@@ -88,7 +87,7 @@ class VideoServiceImpl(VideoService):
             )
             return JSONResponse(content=error_res.dict(), status_code=400)
         try:
-            self.dao.create_video(Video(user_id, video.filename, video.filepath))
+            new_video = self.dao.create_video(Video(user_id, filename, file_path))
         except Exception as e:
             # print(traceback.print_exc())
             error_res = GeneralMsgResDto(
@@ -103,12 +102,7 @@ class VideoServiceImpl(VideoService):
             )
             return JSONResponse(content=error_res.dict(), status_code=500)
 
-        success = GeneralMsgResDto(
-            isSuccess=True,
-            hasException=False,
-            message="Video record successfully created.",
-        )
-        return JSONResponse(content=success.dict(), status_code=200)
+        return new_video
 
     def delete_video(self, video_id: int):
         video = self.dao.get_video_by_id(video_id)
