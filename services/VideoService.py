@@ -1,7 +1,5 @@
 from abc import ABC, abstractmethod
 
-from dto.req.VideoReqDto import VideoReqDto
-
 
 class VideoService(ABC):
 
@@ -22,7 +20,7 @@ class VideoService(ABC):
         pass
 
     @abstractmethod
-    def add_video(self, filename: str, file_path: str, user_id: int):
+    def add_video(self, filename: str, file_path: str, user_id: int, source: str, url: str):
         pass
 
     @abstractmethod

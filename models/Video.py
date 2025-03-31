@@ -10,10 +10,15 @@ class Video(Base):
     user_id = Column(Integer, ForeignKey("user.user_id"), nullable=False)
     filename = Column(String, nullable=False)
     filepath = Column(String, nullable=False)
+    source = Column(String, nullable=False)
+    url = Column(String, nullable=True)
     user = relationship("User", back_populates="videos")
+    prediction = relationship("Prediction", back_populates="video")
 
-    def __init__(self, user_id, filename, filepath, **kw: Any):
+    def __init__(self, user_id, filename, filepath, source, url, **kw: Any):
         super().__init__(**kw)
         self.user_id = user_id
         self.filename = filename
         self.filepath = filepath
+        self.source = source
+        self.url = url

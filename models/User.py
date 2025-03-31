@@ -13,6 +13,7 @@ class User(Base):
     password = Column(String, nullable=False)
     verified_email = Column(Boolean, default=False, nullable=False)
     videos = relationship("Video", back_populates="user")
+    predictions = relationship("Prediction", back_populates="user")
 
     def __init__(self, username, name, email, password, **kw: Any):
         super().__init__(**kw)

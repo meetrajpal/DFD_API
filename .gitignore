@@ -130,7 +130,7 @@ celerybeat.pid
 *.sage.py
 
 uploads
-model
+trained_model
 
 # Environments
 .env
