@@ -26,31 +26,32 @@ CLIP_LENGTH = 16
 
 face_detector = MTCNN(image_size=INPUT_SIZE[0], margin=20, keep_all=False, device=DEVICE)
 
+# Define transforms consistent with training
+transform = transforms.Compose([
+    transforms.ToPILImage(),
+    transforms.Resize(INPUT_SIZE),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225])  # Match training normalization
+])
 
 def get_youtube_video_id(url):
     parsed_url = urlparse(url)
-
     if "youtube.com" in parsed_url.netloc:
         return parse_qs(parsed_url.query).get("v", [None])[0]
-
     elif "youtu.be" in parsed_url.netloc:
         return parsed_url.path.lstrip('/')
-
     return None
-
 
 def get_facebook_share_id(url):
     parsed_url = urlparse(url)
-
     unique_id = parsed_url.path.strip('/').split('/')[-1]
-
     return unique_id
 
-
+# Model class consistent with training
 class MViTForDeepfakes(torch.nn.Module):
     def __init__(self, num_classes=2):
         super().__init__()
-        self.backbone = mvit_v2_s(weights=None)
+        self.backbone = mvit_v2_s(weights="DEFAULT")  # Use pretrained weights as in training
         self.backbone.head = torch.nn.Sequential(
             torch.nn.Dropout(0.5),
             torch.nn.Linear(self.backbone.head[-1].in_features, num_classes)
@@ -59,14 +60,21 @@ class MViTForDeepfakes(torch.nn.Module):
     def forward(self, x):
         return self.backbone(x)
 
-
+# Load model with proper checkpoint handling
 model = MViTForDeepfakes()
 checkpoint = torch.load(MODEL_PATH, map_location=DEVICE)
 
-if list(checkpoint.keys())[0].startswith("module."):
-    checkpoint = {k.replace("module.", ""): v for k, v in checkpoint.items()}
+# Extract state_dict from checkpoint (training saved it as a dict with 'model_state_dict')
+if 'model_state_dict' in checkpoint:
+    state_dict = checkpoint['model_state_dict']
+else:
+    state_dict = checkpoint
 
-model.load_state_dict(checkpoint)
+# Remove 'module.' prefix if present (due to DataParallel in training)
+if list(state_dict.keys())[0].startswith("module."):
+    state_dict = {k.replace("module.", ""): v for k, v in state_dict.items()}
+
+model.load_state_dict(state_dict, strict=False)  # Use strict=False to handle potential mismatches
 
 if torch.cuda.device_count() > 1:
     model = torch.nn.DataParallel(model)
@@ -74,7 +82,6 @@ if torch.cuda.device_count() > 1:
 model.to(DEVICE).eval()
 
 allowed_extensions = {"mp4", "avi", "mov", "mkv"}
-
 
 def preprocess_video(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -105,15 +112,14 @@ def preprocess_video(video_path):
             face = face.permute(1, 2, 0).cpu().numpy()
         else:
             face = cv2.resize(frame, INPUT_SIZE)
-        face_tensor = transforms.ToTensor()(face)
+        face_tensor = transform(face)  # Use training-consistent transforms
         processed_frames.append(face_tensor)
 
     if not face_detected:
         return None
 
-    clip = torch.stack(processed_frames).permute(1, 0, 2, 3).unsqueeze(0).to(DEVICE)
+    clip = torch.stack(processed_frames).permute(1, 0, 2, 3).unsqueeze(0).to(DEVICE)  # [B, C, T, H, W]
     return clip
-
 
 class DetectServiceImpl(DetectService):
     def __init__(self, db: Session):
@@ -145,6 +151,8 @@ class DetectServiceImpl(DetectService):
         input_tensor = preprocess_video(file_path)
 
         if input_tensor is None:
+            if os.path.exists(file_path):
+                os.remove(file_path)
             return JSONResponse(content=GeneralMsgResDto(
                 isSuccess=False,
                 hasException=False,
@@ -152,7 +160,7 @@ class DetectServiceImpl(DetectService):
             ).dict(), status_code=400)
 
         with torch.no_grad():
-            with autocast(device_type='cuda'):
+            with autocast(device_type='cuda', enabled=True):  # Match training's mixed precision
                 output = model(input_tensor)
             probabilities = F.softmax(output, dim=1)
             confidence, predicted_class = torch.max(probabilities, 1)
@@ -254,6 +262,8 @@ class DetectServiceImpl(DetectService):
         input_tensor = preprocess_video(file_path)
 
         if input_tensor is None:
+            if os.path.exists(file_path):
+                os.remove(file_path)
             return JSONResponse(content=GeneralMsgResDto(
                 isSuccess=False,
                 hasException=False,
@@ -261,7 +271,7 @@ class DetectServiceImpl(DetectService):
             ).dict(), status_code=400)
 
         with torch.no_grad():
-            with autocast(device_type='cuda'):
+            with autocast(device_type='cuda', enabled=True):
                 output = model(input_tensor)
             probabilities = F.softmax(output, dim=1)
             confidence, predicted_class = torch.max(probabilities, 1)
@@ -298,10 +308,10 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="internal_server_error",
-                        message="No response from IG reel download server.",
-                        details="No response from IG reel download server. Try after some time.",
+                        message="No response from Twitter video download server.",
+                        details="No response from Twitter video download server. Try after some time.",
                     ),
-                    message="Error occurred while downloading the reel download server."
+                    message="Error occurred while downloading the Twitter video."
                 )
                 return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -315,10 +325,10 @@ class DetectServiceImpl(DetectService):
                 hasException=True,
                 errorResDto=ErrorResDto(
                     code="not_found",
-                    message="We are unable to download this twitter video.",
-                    details="We are unable to download this twitter video. Try with another twitter video.",
+                    message="We are unable to download this Twitter video.",
+                    details="We are unable to download this Twitter video. Try with another Twitter video.",
                 ),
-                message="Error occurred while downloading the twitter video download server."
+                message="Error occurred while downloading the Twitter video."
             )
             return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -335,10 +345,10 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="not_found",
-                        message="We are unable to save this twitter video on our server.",
-                        details="We are unable to download this twitter video. Try with another twitter video.",
+                        message="We are unable to save this Twitter video on our server.",
+                        details="We are unable to download this Twitter video. Try with another Twitter video.",
                     ),
-                    message="Error occurred while downloading the twitter video download server."
+                    message="Error occurred while downloading the Twitter video."
                 )
                 return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -360,7 +370,7 @@ class DetectServiceImpl(DetectService):
             ).dict(), status_code=400)
 
         with torch.no_grad():
-            with autocast(device_type='cuda'):
+            with autocast(device_type='cuda', enabled=True):
                 output = model(input_tensor)
             probabilities = F.softmax(output, dim=1)
             confidence, predicted_class = torch.max(probabilities, 1)
@@ -397,10 +407,10 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="internal_server_error",
-                        message="No response from youtube video download server.",
-                        details="No response from youtube video download server. Try after some time.",
+                        message="No response from YouTube video download server.",
+                        details="No response from YouTube video download server. Try after some time.",
                     ),
-                    message="Error occurred while downloading the youtube video download server."
+                    message="Error occurred while downloading the YouTube video."
                 )
                 return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -414,8 +424,8 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="not_found",
-                        message="We are unable to extract video id for this youtube video.",
-                        details="We are unable to extract video id for this youtube video. Try with another youtube video.",
+                        message="We are unable to extract video id for this YouTube video.",
+                        details="We are unable to extract video id for this YouTube video. Try with another YouTube video.",
                     ),
                     message="Request could not be completed due to an error."
                 )
@@ -427,10 +437,10 @@ class DetectServiceImpl(DetectService):
                 hasException=True,
                 errorResDto=ErrorResDto(
                     code="not_found",
-                    message="We are unable to download this youtube video.",
-                    details="We are unable to download this youtube video. Try with another youtube video.",
+                    message="We are unable to download this YouTube video.",
+                    details="We are unable to download this YouTube video. Try with another YouTube video.",
                 ),
-                message="Error occurred while downloading the youtube video download server."
+                message="Error occurred while downloading the YouTube video."
             )
             return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -438,7 +448,7 @@ class DetectServiceImpl(DetectService):
 
         async with httpx.AsyncClient() as client:
             response = await client.get(download_url)
-            if response.status_code == 302:
+            if response.status_code in (200, 302):  # Handle redirect or success
                 with open(file_path, "wb") as file:
                     file.write(response.content)
             else:
@@ -447,10 +457,10 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="not_found",
-                        message="We are unable to save this youtube video on our server.",
-                        details="We are unable to download this youtube video. Try with another youtube video.",
+                        message="We are unable to save this YouTube video on our server.",
+                        details="We are unable to download this YouTube video. Try with another YouTube video.",
                     ),
-                    message="Error occurred while downloading the twitter video download server."
+                    message="Error occurred while downloading the YouTube video."
                 )
                 return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -472,7 +482,7 @@ class DetectServiceImpl(DetectService):
             ).dict(), status_code=400)
 
         with torch.no_grad():
-            with autocast(device_type='cuda'):
+            with autocast(device_type='cuda', enabled=True):
                 output = model(input_tensor)
             probabilities = F.softmax(output, dim=1)
             confidence, predicted_class = torch.max(probabilities, 1)
@@ -509,10 +519,10 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="internal_server_error",
-                        message="No response from facebook video download server.",
-                        details="No response from facebook video download server. Try after some time.",
+                        message="No response from Facebook video download server.",
+                        details="No response from Facebook video download server. Try after some time.",
                     ),
-                    message="Error occurred while downloading the facebook video download server."
+                    message="Error occurred while downloading the Facebook video."
                 )
                 return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -526,8 +536,8 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="not_found",
-                        message="We are unable to extract video id for this facebook video.",
-                        details="We are unable to extract video id for this facebook video. Try with another facebook video.",
+                        message="We are unable to extract video id for this Facebook video.",
+                        details="We are unable to extract video id for this Facebook video. Try with another Facebook video.",
                     ),
                     message="Request could not be completed due to an error."
                 )
@@ -539,10 +549,10 @@ class DetectServiceImpl(DetectService):
                 hasException=True,
                 errorResDto=ErrorResDto(
                     code="not_found",
-                    message="We are unable to download this facebook video.",
-                    details="We are unable to download this facebook video. Try with another facebook video.",
+                    message="We are unable to download this Facebook video.",
+                    details="We are unable to download this Facebook video. Try with another Facebook video.",
                 ),
-                message="Error occurred while downloading the youtube video download server."
+                message="Error occurred while downloading the Facebook video."
             )
             return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -559,10 +569,10 @@ class DetectServiceImpl(DetectService):
                     hasException=True,
                     errorResDto=ErrorResDto(
                         code="not_found",
-                        message="We are unable to save this facebook video on our server.",
-                        details="We are unable to download this facebook video. Try with another facebook video.",
+                        message="We are unable to save this Facebook video on our server.",
+                        details="We are unable to download this Facebook video. Try with another Facebook video.",
                     ),
-                    message="Error occurred while downloading the facebook video download server."
+                    message="Error occurred while downloading the Facebook video."
                 )
                 return JSONResponse(content=error_res.dict(), status_code=500)
 
@@ -584,7 +594,7 @@ class DetectServiceImpl(DetectService):
             ).dict(), status_code=400)
 
         with torch.no_grad():
-            with autocast(device_type='cuda'):
+            with autocast(device_type='cuda', enabled=True):
                 output = model(input_tensor)
             probabilities = F.softmax(output, dim=1)
             confidence, predicted_class = torch.max(probabilities, 1)

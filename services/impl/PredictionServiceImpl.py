@@ -42,18 +42,18 @@ class PredictionServiceImpl(PredictionService):
         user_service = UserServiceImpl(self.db)
         user_service.get_user_by_id(user_id)
         predictions = self.dao.get_predictions_by_userid(user_id)
-        if len(predictions) == 0:
-            error_res = GeneralMsgResDto(
-                isSuccess=False,
-                hasException=True,
-                errorResDto=ErrorResDto(
-                    code="not_found",
-                    message="Prediction not found",
-                    details=f"Prediction not found with user_id: {user_id}",
-                ),
-                message="Request could not be completed due to an error.",
-            )
-            return JSONResponse(content=error_res.dict(), status_code=404)
+        # if len(predictions) == 0:
+        #     error_res = GeneralMsgResDto(
+        #         isSuccess=False,
+        #         hasException=True,
+        #         errorResDto=ErrorResDto(
+        #             code="not_found",
+        #             message="Prediction not found",
+        #             details=f"Prediction not found with user_id: {user_id}",
+        #         ),
+        #         message="Request could not be completed due to an error.",
+        #     )
+        #     return JSONResponse(content=error_res.dict(), status_code=404)
         return predictions
 
     def get_prediction_by_video_id(self, video_id: int):

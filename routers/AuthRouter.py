@@ -19,7 +19,6 @@ from fastapi import HTTPException
 from dto.req.ForgotPasswordReqDto import ForgotPasswordReqDto
 from dto.res.UnauthenticatedResDto import UnauthenticatedResDto
 
-
 router = APIRouter(prefix="/api/v1/auth", tags=["Authentication"])
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
@@ -203,14 +202,14 @@ async def create_user(
     return user_service.add_user(user)
 
 
-@router.post("/logout",
-             response_model=GeneralMsgResDto,
-             responses={
-                 400: {"model": UnauthenticatedResDto, "description": "Bad Request"},
-                 401: {"model": UnauthenticatedResDto, "description": "Unauthorized"},
-                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
-             }
-             )
+@router.get("/logout",
+            response_model=GeneralMsgResDto,
+            responses={
+                400: {"model": UnauthenticatedResDto, "description": "Bad Request"},
+                401: {"model": UnauthenticatedResDto, "description": "Unauthorized"},
+                500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+            }
+            )
 async def logout(
         user: user_dependency,
         db: db_dependency,

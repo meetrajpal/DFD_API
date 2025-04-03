@@ -95,6 +95,7 @@ class PredictionDAO:
         self.db.refresh(prediction)
         return prediction
 
-    def delete_prediction(self, prediction: Prediction):
+    def delete_prediction(self, pred_id: int):
+        prediction: Prediction = self.db.query(Prediction).filter(Prediction.pred_id == pred_id).first()
         self.db.delete(prediction)
         self.db.commit()

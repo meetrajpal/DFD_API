@@ -25,7 +25,7 @@ def generate_update_email_template(token: str) -> str:
                         <td style="padding: 30px;">
                             <h1>Finish setting your new email</h1>
                             <p>To update your email address, enter new email address by clicking the link below within 15 minutes after that the link will expire.</p>
-                            <a href="{os.getenv("FRONT_DOMAIN")}/update-email/{token}" style="background-color: #000000; padding: 12px 15px; color: #ffffff; border-radius: 25px;">Update Email</a>
+                            <a href="{os.getenv("FRONT_DOMAIN")}/confirm-update-email?token={token}" style="background-color: #000000; padding: 12px 15px; color: #ffffff; border-radius: 25px;">Update Email</a>
                             <p>If you did not requested to change your email address, please ignore this message and do not click on the link above.</p>
                         </td>
                     </tr>
@@ -66,7 +66,7 @@ def generate_forgot_password_email_template(token: str) -> str:
                         <td style="padding: 30px;">
                             <h1>Finish setting your new password</h1>
                             <p>To reset your password, enter new password by clicking the link below within 15 minutes after that the link will expire.</p>
-                            <a href="{os.getenv("FRONT_DOMAIN")}/forgot-password/{token}" style="background-color: #000000; padding: 12px 15px; color: #ffffff; border-radius: 25px;">Reset Password</a>
+                            <a href="{os.getenv("FRONT_DOMAIN")}/confirm-forgot-password?token={token}" style="background-color: #000000; padding: 12px 15px; color: #ffffff; border-radius: 25px;">Reset Password</a>
                             <p>If you did not requested to reset your password, please ignore this message and do not click on the link above.</p>
                         </td>
                     </tr>
@@ -108,7 +108,7 @@ def generate_verify_email_template(token: str) -> str:
                     <td style="padding: 30px;">
                         <h1>Finish creating your account</h1>
                         <p>To validate your account and activate your ability to detect deepfakes, please complete your profile by clicking the link below</p>
-                        <a href="{os.getenv("FRONT_DOMAIN")}/verify-email/{token}" style="background-color: #000000; padding: 12px 15px; color: #ffffff; border-radius: 25px;">Confirm email address</a>
+                        <a href="{os.getenv("FRONT_DOMAIN")}/verify-email?token={token}" style="background-color: #000000; padding: 12px 15px; color: #ffffff; border-radius: 25px;">Confirm email address</a>
                         <p>If you did not associate your address with a DFD account, please ignore this message and do not click on the link above.</p>
                     </td>
                 </tr>
