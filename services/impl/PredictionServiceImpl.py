@@ -125,7 +125,7 @@ class PredictionServiceImpl(PredictionService):
             return JSONResponse(content=error_res.dict(), status_code=404)
 
         try:
-            self.dao.delete_prediction(prediction)
+            self.dao.delete_prediction(pred_id)
         except Exception as e:
             error_res = GeneralMsgResDto(
                 isSuccess=False,

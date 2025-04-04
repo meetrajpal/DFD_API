@@ -104,7 +104,7 @@ class UserServiceImpl(UserService):
                 hasException=True,
                 errorResDto=ErrorResDto(
                     code="bad_request",
-                    message="User already exists",
+                    message="Username already exists",
                     details=f"User already exists with username: {user.username}",
                 ),
                 message="Request could not be completed due to an error.",

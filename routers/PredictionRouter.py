@@ -79,7 +79,7 @@ async def get_predictions(
 async def delete_prediction(
         user: user_dependency,
         db: db_dependency,
-        prediction_id: int = Query(description="Enter the prediction id to delete prediction")
+        pred_id: int = Query(description="Enter the prediction id to delete prediction")
 ):
     if user is None:
         error_res = GeneralMsgResDto(
@@ -94,7 +94,7 @@ async def delete_prediction(
         )
         return JSONResponse(content=error_res.dict(), status_code=401)
 
-    if not prediction_id:
+    if not pred_id:
         error_res = GeneralMsgResDto(
             isSuccess=False,
             hasException=True,
@@ -108,4 +108,4 @@ async def delete_prediction(
         return JSONResponse(content=error_res.dict(), status_code=400)
 
     prediction_service = PredictionServiceImpl(db)
-    return prediction_service.delete_prediction(prediction_id)
+    return prediction_service.delete_prediction(pred_id)

@@ -60,15 +60,15 @@ async def upload_video(
     return detect_service.detect_video(user["user_id"], user["username"], file)
 
 
-@router.post("/ig-reel",
-             response_model=GeneralMsgResDto,
-             responses={
-                 401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
-                 404: {"model": GeneralMsgResDto, "description": "Not found"},
-                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
-                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
-             }
-             )
+@router.get("/ig-reel",
+            response_model=GeneralMsgResDto,
+            responses={
+                401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
+                404: {"model": GeneralMsgResDto, "description": "Not found"},
+                400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+            }
+            )
 async def insta_reel(
         user: user_dependency,
         db: db_dependency,
@@ -100,32 +100,32 @@ async def insta_reel(
         )
         return JSONResponse(content=error_res.dict(), status_code=400)
 
-    # if not url.__contains__("https://www.instagram.com/reels"):
-    #     error_res = GeneralMsgResDto(
-    #         isSuccess=False,
-    #         hasException=True,
-    #         errorResDto=ErrorResDto(
-    #             code="bad_request",
-    #             message="Please enter valid url of instagram reel",
-    #             details="This URL not seems to be valid for instagram reel"
-    #         ),
-    #         message="Request could not be completed due to an error."
-    #     )
-    #     return JSONResponse(content=error_res.dict(), status_code=400)
+    if "https://www.instagram.com/reels" not in url:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter valid url of instagram reel",
+                details="This URL not seems to be valid for instagram reel. Make sure it looks like https://www.instagram.com/p/B61OVIsgx_6/?igsh=NTc4MTIwNjQ2YQ=="
+            ),
+            message="Request could not be completed due to an error."
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
 
     detect_service = DetectServiceImpl(db)
     return await detect_service.ig_reel(user["user_id"], user["username"], url)
 
 
-@router.post("/twitter-video",
-             response_model=GeneralMsgResDto,
-             responses={
-                 401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
-                 404: {"model": GeneralMsgResDto, "description": "Not found"},
-                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
-                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
-             }
-             )
+@router.get("/twitter-video",
+            response_model=GeneralMsgResDto,
+            responses={
+                401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
+                404: {"model": GeneralMsgResDto, "description": "Not found"},
+                400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+            }
+            )
 async def twitter_video(
         user: user_dependency,
         db: db_dependency,
@@ -157,32 +157,32 @@ async def twitter_video(
         )
         return JSONResponse(content=error_res.dict(), status_code=400)
 
-    # if not url.__contains__("https://www.instagram.com/reels"):
-    #     error_res = GeneralMsgResDto(
-    #         isSuccess=False,
-    #         hasException=True,
-    #         errorResDto=ErrorResDto(
-    #             code="bad_request",
-    #             message="Please enter valid url of instagram reel",
-    #             details="This URL not seems to be valid for instagram reel"
-    #         ),
-    #         message="Request could not be completed due to an error."
-    #     )
-    #     return JSONResponse(content=error_res.dict(), status_code=400)
+    if "https://x.com" not in url:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter valid url of twitter video.",
+                details="This URL not seems to be valid for twitter video. Make sure it looks like https://x.com/TedCruz1072676/status/1905223889875288355"
+            ),
+            message="Request could not be completed due to an error."
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
 
     detect_service = DetectServiceImpl(db)
     return await detect_service.twitter_video(user["user_id"], user["username"], url)
 
 
-@router.post("/youtube-video",
-             response_model=GeneralMsgResDto,
-             responses={
-                 401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
-                 404: {"model": GeneralMsgResDto, "description": "Not found"},
-                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
-                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
-             }
-             )
+@router.get("/youtube-video",
+            response_model=GeneralMsgResDto,
+            responses={
+                401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
+                404: {"model": GeneralMsgResDto, "description": "Not found"},
+                400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+            }
+            )
 async def youtube_video(
         user: user_dependency,
         db: db_dependency,
@@ -214,32 +214,32 @@ async def youtube_video(
         )
         return JSONResponse(content=error_res.dict(), status_code=400)
 
-    # if not url.__contains__("https://www.instagram.com/reels"):
-    #     error_res = GeneralMsgResDto(
-    #         isSuccess=False,
-    #         hasException=True,
-    #         errorResDto=ErrorResDto(
-    #             code="bad_request",
-    #             message="Please enter valid url of instagram reel",
-    #             details="This URL not seems to be valid for instagram reel"
-    #         ),
-    #         message="Request could not be completed due to an error."
-    #     )
-    #     return JSONResponse(content=error_res.dict(), status_code=400)
+    if "https://youtu.be" not in url:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter valid url of youtube video",
+                details="This URL not seems to be valid for youtube video. Make sure it looks like https://youtu.be/uEg9_M4YaJk?si=mxrCu2F8btZKhQt7"
+            ),
+            message="Request could not be completed due to an error."
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
 
     detect_service = DetectServiceImpl(db)
     return await detect_service.youtube_video(user["user_id"], user["username"], url)
 
 
-@router.post("/facebook",
-             response_model=GeneralMsgResDto,
-             responses={
-                 401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
-                 404: {"model": GeneralMsgResDto, "description": "Not found"},
-                 400: {"model": GeneralMsgResDto, "description": "Bad Request"},
-                 500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
-             }
-             )
+@router.get("/facebook",
+            response_model=GeneralMsgResDto,
+            responses={
+                401: {"model": UnauthenticatedResDto, "description": "Unauthorised"},
+                404: {"model": GeneralMsgResDto, "description": "Not found"},
+                400: {"model": GeneralMsgResDto, "description": "Bad Request"},
+                500: {"model": GeneralMsgResDto, "description": "Internal Server Error"}
+            }
+            )
 async def facebook(
         user: user_dependency,
         db: db_dependency,
@@ -271,18 +271,18 @@ async def facebook(
         )
         return JSONResponse(content=error_res.dict(), status_code=400)
 
-    # if not url.__contains__("https://www.instagram.com/reels"):
-    #     error_res = GeneralMsgResDto(
-    #         isSuccess=False,
-    #         hasException=True,
-    #         errorResDto=ErrorResDto(
-    #             code="bad_request",
-    #             message="Please enter valid url of instagram reel",
-    #             details="This URL not seems to be valid for instagram reel"
-    #         ),
-    #         message="Request could not be completed due to an error."
-    #     )
-    #     return JSONResponse(content=error_res.dict(), status_code=400)
+    if "https://www.facebook.com/share" not in url:
+        error_res = GeneralMsgResDto(
+            isSuccess=False,
+            hasException=True,
+            errorResDto=ErrorResDto(
+                code="bad_request",
+                message="Please enter valid url of facebook",
+                details="This URL not seems to be valid for facebook video. Make sure it is like https://www.facebook.com/share/v/1ETMqmyaqw/"
+            ),
+            message="Request could not be completed due to an error."
+        )
+        return JSONResponse(content=error_res.dict(), status_code=400)
 
     detect_service = DetectServiceImpl(db)
     return await detect_service.facebook(user["user_id"], user["username"], url)
