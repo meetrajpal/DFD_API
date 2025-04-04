@@ -1,0 +1,2 @@
+trained_model/8983_best_multi_allaugs_mvit_face_detection.pth filter=lfs diff=lfs merge=lfs -text
+*.pth filter=lfs diff=lfs merge=lfs -text
