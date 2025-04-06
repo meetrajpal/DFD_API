@@ -20,7 +20,7 @@ from services.impl.VideoServiceImpl import VideoServiceImpl
 from services.impl.PredictionServiceImpl import PredictionServiceImpl
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-MODEL_PATH = os.path.join("trained_model", "8983_best_multi_allaugs_mvit_face_detection.pth")
+MODEL_PATH = os.path.join("trained_model", "best_multi_6k_allaugs_mvit_mtcnn.pth")
 INPUT_SIZE = (224, 224)
 CLIP_LENGTH = 16
 
@@ -34,6 +34,7 @@ transform = transforms.Compose([
     transforms.Normalize(mean=[0.45, 0.45, 0.45], std=[0.225, 0.225, 0.225])  # Match training normalization
 ])
 
+
 def get_youtube_video_id(url):
     parsed_url = urlparse(url)
     if "youtube.com" in parsed_url.netloc:
@@ -42,10 +43,12 @@ def get_youtube_video_id(url):
         return parsed_url.path.lstrip('/')
     return None
 
+
 def get_facebook_share_id(url):
     parsed_url = urlparse(url)
     unique_id = parsed_url.path.strip('/').split('/')[-1]
     return unique_id
+
 
 # Model class consistent with training
 class MViTForDeepfakes(torch.nn.Module):
@@ -59,6 +62,7 @@ class MViTForDeepfakes(torch.nn.Module):
 
     def forward(self, x):
         return self.backbone(x)
+
 
 # Load model with proper checkpoint handling
 model = MViTForDeepfakes()
@@ -82,6 +86,7 @@ if torch.cuda.device_count() > 1:
 model.to(DEVICE).eval()
 
 allowed_extensions = {"mp4", "avi", "mov", "mkv"}
+
 
 def preprocess_video(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -112,14 +117,15 @@ def preprocess_video(video_path):
             face = face.permute(1, 2, 0).cpu().numpy()
         else:
             face = cv2.resize(frame, INPUT_SIZE)
-        face_tensor = transform(face)  # Use training-consistent transforms
+        face_tensor = transform(face)
         processed_frames.append(face_tensor)
 
     if not face_detected:
         return None
 
-    clip = torch.stack(processed_frames).permute(1, 0, 2, 3).unsqueeze(0).to(DEVICE)  # [B, C, T, H, W]
+    clip = torch.stack(processed_frames).permute(1, 0, 2, 3).unsqueeze(0).to(DEVICE)
     return clip
+
 
 class DetectServiceImpl(DetectService):
     def __init__(self, db: Session):
@@ -160,13 +166,13 @@ class DetectServiceImpl(DetectService):
             ).dict(), status_code=400)
 
         with torch.no_grad():
-            with autocast(device_type='cuda', enabled=True):  # Match training's mixed precision
+            with autocast(device_type='cuda', enabled=True):
                 output = model(input_tensor)
             probabilities = F.softmax(output, dim=1)
             confidence, predicted_class = torch.max(probabilities, 1)
 
         result = "FAKE" if predicted_class.item() == 1 else "REAL"
-        confidence_score = f"{confidence.item():.2f}"
+        confidence_score = f"{(confidence.item()*100):.2f}"
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -177,7 +183,7 @@ class DetectServiceImpl(DetectService):
         return JSONResponse(content=GeneralMsgResDto(
             isSuccess=True,
             hasException=False,
-            message=f"Detection Result: {result} (Confidence: {confidence_score})."
+            message=f"Detection Result: {result} (Confidence: {confidence_score}%)."
         ).dict(), status_code=200)
 
     async def ig_reel(self, user_id: int, username: str, url: str):
@@ -277,7 +283,7 @@ class DetectServiceImpl(DetectService):
             confidence, predicted_class = torch.max(probabilities, 1)
 
         result = "FAKE" if predicted_class.item() == 1 else "REAL"
-        confidence_score = f"{confidence.item():.2f}"
+        confidence_score = f"{(confidence.item()*100):.2f}"
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -288,7 +294,7 @@ class DetectServiceImpl(DetectService):
         return JSONResponse(content=GeneralMsgResDto(
             isSuccess=True,
             hasException=False,
-            message=f"Detection Result: {result} (Confidence: {confidence_score})."
+            message=f"Detection Result: {result} (Confidence: {confidence_score}%)."
         ).dict(), status_code=200)
 
     async def twitter_video(self, user_id: int, username: str, url: str):
@@ -376,7 +382,7 @@ class DetectServiceImpl(DetectService):
             confidence, predicted_class = torch.max(probabilities, 1)
 
         result = "FAKE" if predicted_class.item() == 1 else "REAL"
-        confidence_score = f"{confidence.item():.2f}"
+        confidence_score = f"{(confidence.item()*100):.2f}"
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -387,7 +393,7 @@ class DetectServiceImpl(DetectService):
         return JSONResponse(content=GeneralMsgResDto(
             isSuccess=True,
             hasException=False,
-            message=f"Detection Result: {result} (Confidence: {confidence_score})."
+            message=f"Detection Result: {result} (Confidence: {confidence_score}%)."
         ).dict(), status_code=200)
 
     async def youtube_video(self, user_id: int, username: str, url: str):
@@ -488,7 +494,7 @@ class DetectServiceImpl(DetectService):
             confidence, predicted_class = torch.max(probabilities, 1)
 
         result = "FAKE" if predicted_class.item() == 1 else "REAL"
-        confidence_score = f"{confidence.item():.2f}"
+        confidence_score = f"{(confidence.item()*100):.2f}"
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -499,7 +505,7 @@ class DetectServiceImpl(DetectService):
         return JSONResponse(content=GeneralMsgResDto(
             isSuccess=True,
             hasException=False,
-            message=f"Detection Result: {result} (Confidence: {confidence_score})."
+            message=f"Detection Result: {result} (Confidence: {confidence_score}%)."
         ).dict(), status_code=200)
 
     async def facebook(self, user_id: int, username: str, url: str):
@@ -600,7 +606,7 @@ class DetectServiceImpl(DetectService):
             confidence, predicted_class = torch.max(probabilities, 1)
 
         result = "FAKE" if predicted_class.item() == 1 else "REAL"
-        confidence_score = f"{confidence.item():.2f}"
+        confidence_score = f"{(confidence.item()*100):.2f}"
 
         if os.path.exists(file_path):
             os.remove(file_path)
@@ -611,5 +617,5 @@ class DetectServiceImpl(DetectService):
         return JSONResponse(content=GeneralMsgResDto(
             isSuccess=True,
             hasException=False,
-            message=f"Detection Result: {result} (Confidence: {confidence_score})."
+            message=f"Detection Result: {result} (Confidence: {confidence_score}%)."
         ).dict(), status_code=200)

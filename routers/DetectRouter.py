@@ -100,7 +100,7 @@ async def insta_reel(
         )
         return JSONResponse(content=error_res.dict(), status_code=400)
 
-    if "https://www.instagram.com/reels" not in url:
+    if ("https://www.instagram.com/reels" not in url) & ("https://www.instagram.com/p" not in url):
         error_res = GeneralMsgResDto(
             isSuccess=False,
             hasException=True,
